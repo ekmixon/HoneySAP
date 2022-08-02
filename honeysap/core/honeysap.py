@@ -74,11 +74,7 @@ class HoneySAP(Loggeable):
         log file)."""
         level = Loggeable.get_level(self.config.verbose)
 
-        if self.config.verbose_all:
-            namespace = None
-        else:
-            namespace = 'honeysap'
-
+        namespace = None if self.config.verbose_all else 'honeysap'
         if self.config.colored_console and colored_formatter:
             formatter = colored_formatter
         else:

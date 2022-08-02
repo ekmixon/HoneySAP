@@ -120,30 +120,30 @@ class ForwarderService(BaseService):
 
     def run(self):
         # If is not virtual, wait until a client connection arrives
-        if not self.virtual:
+        if self.virtual:
+            return
+        try:
+            while not self.stopped.is_set():
+                # Connects with the client
+                (client, client_address) = self.listener.ins.accept()
 
-            try:
-                while not self.stopped.is_set():
-                    # Connects with the client
-                    (client, client_address) = self.listener.ins.accept()
+                # Connects with the target
+                remote = self.create_remote(client_address,
+                                            self.target_address,
+                                            self.target_port)
 
-                    # Connects with the target
-                    remote = self.create_remote(client_address,
-                                                self.target_address,
-                                                self.target_port)
+                # Handle the messages until the service is stopped
+                try:
+                    while not self.stopped.is_set():
+                        self.handle(remote, client, client_address)
+                # If a socket error was raised, we should continue
+                # to allow other connections
+                except socket.error as e:
+                    continue
 
-                    # Handle the messages until the service is stopped
-                    try:
-                        while not self.stopped.is_set():
-                            self.handle(remote, client, client_address)
-                    # If a socket error was raised, we should continue
-                    # to allow other connections
-                    except socket.error as e:
-                        continue
-
-            # Other exceptions should be raised
-            except Exception as e:
-                raise e
+        # Other exceptions should be raised
+        except Exception as e:
+            raise e
 
     def stop(self):
         # Set the event as stopped

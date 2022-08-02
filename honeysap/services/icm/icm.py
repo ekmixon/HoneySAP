@@ -32,11 +32,10 @@ class SAPICMService(BaseHTTPService):
 
     def version_string(self):
         release = str(self.server.config.get("release", self.default_release))
-        release = "%s.%s" % (release[0], release[1:])
+        release = f"{release[0]}.{release[1:]}"
         icm_release = self.server.config.get("icm_release", release)
 
-        return "SAP NetWeaver Application Server %s / ICM %s" % (release,
-                                                                 icm_release)
+        return f"SAP NetWeaver Application Server {release} / ICM {icm_release}"
 
     def route_index(self):
         pass

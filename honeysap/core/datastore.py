@@ -125,13 +125,18 @@ class DataStoreManager(Loggeable):
         loader = ClassLoader([BaseDataStore], self.datastore_path)
         self.datastore_cls = loader.find(self.datastore_classname)
         if self.datastore_cls is None:
-            raise DataStoreNotFound("Data store class %s not found" % self.datastore_classname)
+            raise DataStoreNotFound(
+                f"Data store class {self.datastore_classname} not found"
+            )
 
-        self.logger.info("Data store manager initialized with data store %s" % self.datastore_classname)
+
+        self.logger.info(
+            f"Data store manager initialized with data store {self.datastore_classname}"
+        )
 
     def get_datastore(self):
         if self.datastore is None:
             self.datastore = self.datastore_cls()
             self.datastore.load_config(self.config)
-            self.logger.debug("Created data store %s" % self.datastore_classname)
+            self.logger.debug(f"Created data store {self.datastore_classname}")
         return self.datastore

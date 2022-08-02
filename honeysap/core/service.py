@@ -56,7 +56,7 @@ class BaseService(Loggeable):
         return self.config.get("listener_address", "127.0.0.1")
 
     def __str__(self):
-        return "<Service %s>" % self.alias
+        return f"<Service {self.alias}>"
 
     def __init__(self, config, datastore, session_manager, service_manager):
         """Initialize the service with the options provided.
@@ -244,11 +244,15 @@ class ServiceManager(Loggeable):
 
     def find_service_by_address(self, address, port):
         """Returns the registered service matching a given address and port."""
-        for service in self.services:
-            if service.listener_address == address and \
-               service.listener_port == port:
-                return service
-        return None
+        return next(
+            (
+                service
+                for service in self.services
+                if service.listener_address == address
+                and service.listener_port == port
+            ),
+            None,
+        )
 
     def run(self):
         """Starts all the registered services"""

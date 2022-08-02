@@ -57,7 +57,11 @@ class ClassLoader(Loggeable):
                 yield class_name, actual_class
 
     def find(self, class_name):
-        for (class_name_found, actual_class) in self.load():
-            if class_name == class_name_found:
-                return actual_class
-        return None
+        return next(
+            (
+                actual_class
+                for class_name_found, actual_class in self.load()
+                if class_name == class_name_found
+            ),
+            None,
+        )

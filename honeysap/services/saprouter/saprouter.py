@@ -133,7 +133,7 @@ class SAPRouterServerHandler(Loggeable, SAPNIServerHandler):
         self.server.clients_count += 1
         self.server.clients[self.client_address].id = self.server.clients_count
         self.server.clients[self.client_address].address = self.client_address[0]
-        self.server.clients[self.client_address].connected_on = datetime.today()
+        self.server.clients[self.client_address].connected_on = datetime.now()
 
     def finish(self):
         """Closes the connection and deletes the client from the clients list"""
@@ -241,7 +241,7 @@ class SAPRouterServerHandler(Loggeable, SAPNIServerHandler):
             # TODO: Check if we need to return an error
 
         # Check the offset value against the remaining hops
-        actual_offset = sum([len(x) for x in pkt.route_string[:pkt.route_rest_nodes]])
+        actual_offset = sum(len(x) for x in pkt.route_string[:pkt.route_rest_nodes])
         if pkt.route_offset != actual_offset:
             self.logger.debug("Invalid route string offset")
             # TODO: Check if we need to return an error
@@ -249,7 +249,7 @@ class SAPRouterServerHandler(Loggeable, SAPNIServerHandler):
         # Check that the first hop is the SAP Router
         first_hop = pkt.route_string[0]
         if first_hop.hostname != self.server.listener_address or \
-           first_hop.port != self.server.listener_port:
+               first_hop.port != self.server.listener_port:
             self.logger.debug("Invalid first hop in route string")
             # TODO: Check if we need to return an error
 
@@ -264,16 +264,18 @@ class SAPRouterServerHandler(Loggeable, SAPNIServerHandler):
                                                                               int(route_string.port))
 
         if action == RouteTable.ROUTE_DENY:
-            self.logger.debug("Route to %s:%s denied" % (route_string.hostname,
-                                                         route_string.port))
-            self.return_error(return_code=-94,
-                              error="%s: route permission denied (%s to %s, %s)" % (self.hostname,
-                                                                                    self.server.listener_address,
-                                                                                    route_string.hostname,
-                                                                                    route_string.port))
+            self.logger.debug(
+                f"Route to {route_string.hostname}:{route_string.port} denied"
+            )
+
+            self.return_error(
+                return_code=-94,
+                error=f"{self.hostname}: route permission denied ({self.server.listener_address} to {route_string.hostname}, {route_string.port})",
+            )
+
             return
 
-        elif talk_mode != RouteTable.MODE_ANY and talk_mode != pkt.route_talk_mode:
+        elif talk_mode not in [RouteTable.MODE_ANY, pkt.route_talk_mode]:
             self.logger.debug("Talk mode (%d) to %s:%s denied" % (pkt.route_talk_mode,
                                                                   route_string.hostname,
                                                                   route_string.port))
@@ -283,16 +285,20 @@ class SAPRouterServerHandler(Loggeable, SAPNIServerHandler):
         elif action == RouteTable.ROUTE_ALLOW:
             if password:
                 if password == route_string.password:
-                    self.logger.debug("Valid password for route to %s:%s" % (route_string.hostname,
-                                                                             route_string.port))
+                    self.logger.debug(
+                        f"Valid password for route to {route_string.hostname}:{route_string.port}"
+                    )
+
                     self.session.add_event("Route request allowed, valid password", data={"target_host": route_string.hostname,
                                                                                           "target_port": route_string.port,
                                                                                           "password": route_string.password},
                                            request=str(pkt))
 
                 else:
-                    self.logger.debug("Invalid password for route to %s:%s" % (route_string.hostname,
-                                                                               route_string.port))
+                    self.logger.debug(
+                        f"Invalid password for route to {route_string.hostname}:{route_string.port}"
+                    )
+
                     self.session.add_event("Route request allowed, invalid password", data={"target_host": route_string.hostname,
                                                                                             "target_port": route_string.port,
                                                                                             "password": route_string.password},
@@ -301,8 +307,10 @@ class SAPRouterServerHandler(Loggeable, SAPNIServerHandler):
                     return
 
             else:
-                self.logger.debug("Route request allowed to %s:%s" % (route_string.hostname,
-                                                                      route_string.port))
+                self.logger.debug(
+                    f"Route request allowed to {route_string.hostname}:{route_string.port}"
+                )
+
                 self.session.add_event("Route request allowed", data={"target": route_string.hostname,
                                                                       "port": route_string.port,
                                                                       "password": route_string.password},
@@ -317,16 +325,20 @@ class SAPRouterServerHandler(Loggeable, SAPNIServerHandler):
         # meaning that the SAP Router tried to connect to the target service
         # but it didn't responded
         if service is None:
-            self.logger.debug("Target service %s:%s not available" % (route_string.hostname,
-                                                                      route_string.port))
+            self.logger.debug(
+                f"Target service {route_string.hostname}:{route_string.port} not available"
+            )
+
             self.session.add_event("Target service not available", data={"target": route_string.hostname,
                                                                          "port": route_string.port,
                                                                          "password": route_string.password},
                                    request=str(pkt))
 
         else:
-            self.logger.debug("Target service %s:%s found, registering and routing" % (route_string.hostname,
-                                                                                       route_string.port))
+            self.logger.debug(
+                f"Target service {route_string.hostname}:{route_string.port} found, registering and routing"
+            )
+
 
             # First cancel the timeout as a valid route was specified
             self._timeout.cancel()
@@ -513,4 +525,6 @@ class SAPRouterService(BaseTCPService):
         self.server.listener_address = self.listener_address
         # Generates a random pid and records the time when the service started
         self.server.pid = self.server.config.get("pid", None)
-        self.server.time_started = self.server.config.get("time_started", datetime.today())
+        self.server.time_started = self.server.config.get(
+            "time_started", datetime.now()
+        )

@@ -42,11 +42,7 @@ class Session(Loggeable):
         self.source_port = source_port
         self.target_ip = target_ip
         self.target_port = target_port
-        self.logger_name = "Session_%s_%s:%s_%s:%s" % (service,
-                                                       target_ip,
-                                                       target_port,
-                                                       source_ip,
-                                                       source_port)
+        self.logger_name = f"Session_{service}_{target_ip}:{target_port}_{source_ip}:{source_port}"
 
     def add_event(self, event, **kwargs):
         """Add an event to the attack session."""
@@ -64,7 +60,7 @@ class SessionManager(Loggeable):
     def __init__(self, config):
         """Initialize the attack session."""
         self.config = config
-        self.sessions = dict()
+        self.sessions = {}
         self.event_queue = Queue()
         self.logger.debug("Session manager initialized")
 

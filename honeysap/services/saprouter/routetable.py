@@ -130,7 +130,7 @@ class RouteTable(Loggeable):
                 for (host, port) in self.parse_target_hosts(target, port):
                     self.table[(host, port)] = (action, talk_mode, password)
 
-        self.logger.debug("Using route table: %s" % self.table)
+        self.logger.debug(f"Using route table: {self.table}")
 
     def lookup_target(self, host, port):
         """Performs a lookup of a target host/port and returns the action to

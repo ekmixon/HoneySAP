@@ -40,8 +40,10 @@ class DBFeedsTest(unittest.TestCase):
         self.test_filename = mkstemp(".sqlite", "dbfeedstest")[1]
 
         # Register an event using the DBFeed
-        configuration = Configuration({"feed": "DBFeed",
-                                       "db_engine": "sqlite:///%s" % self.test_filename})
+        configuration = Configuration(
+            {"feed": "DBFeed", "db_engine": f"sqlite:///{self.test_filename}"}
+        )
+
         feed = DBFeed(configuration)
         event = Event("Test event")
         event.session = Session(Queue(), "test", "127.0.0.1", 3200,

@@ -94,10 +94,10 @@ class SAPDispatcherServerHandler(Loggeable, SAPNIServerHandler):
         self.session.add_event("Received packet", request=str(self.packet))
 
         if self.client_address in self.server.clients and self.server.clients[self.client_address].init:
-            self.logger.debug("Already initialized client %s" % str(self.client_address))
+            self.logger.debug(f"Already initialized client {str(self.client_address)}")
             self.handle_msg()
         else:
-            self.logger.debug("Uninitialized client %s" % str(self.client_address))
+            self.logger.debug(f"Uninitialized client {str(self.client_address)}")
             self.handle_init()
 
     def handle_init(self):
@@ -114,44 +114,44 @@ class SAPDispatcherServerHandler(Loggeable, SAPNIServerHandler):
             self.session.add_event("Initialization request received", data={"terminal": self.packet[SAPDiagDP].terminal},
                                    request=str(self.packet), response=str(login_screen))
         else:
-            self.logger.debug("Error during initialization of client %s" % str(self.client_address))
+            self.logger.debug(
+                f"Error during initialization of client {str(self.client_address)}"
+            )
+
             self.logoff()
 
     def handle_msg(self):
-        self.logger.debug("Received message from client %s" % str(self.client_address))
+        self.logger.debug(f"Received message from client {str(self.client_address)}")
         diag = self.packet[SAPDiag]
 
         # Handle exit transaction (OK CODE = /i)
         if len(diag.get_item("APPL", "VARINFO", "OKCODE")) > 0 and diag.get_item("APPL", "VARINFO", "OKCODE")[0].item_value == "/i":
-            self.logger.debug("Windows closed by the client %s" % str(self.client_address))
+            self.logger.debug(f"Windows closed by the client {str(self.client_address)}")
             self.session.add_event("Windows closed by the client")
             self.logoff()
 
-        # Handle events (UI EVENT SOURCE)
         elif len(diag.get_item("APPL", "UI_EVENT", "UI_EVENT_SOURCE")) > 0:
-            self.logger.debug("UI Event sent by the client %s" % str(self.client_address))
+            self.logger.debug(f"UI Event sent by the client {str(self.client_address)}")
             ui_event_source = diag.get_item("APPL", "UI_EVENT", "UI_EVENT_SOURCE")[0].item_value
 
             # Handle function key
             if ui_event_source.valid_functionkey_data:
                 # Handle logoff event
                 if ui_event_source.event_type == 7 and ui_event_source.control_type == 10 and ui_event_source.event_data == 15:
-                    self.logger.debug("Logoff sent by the client %s" % str(self.client_address))
+                    self.logger.debug(f"Logoff sent by the client {str(self.client_address)}")
                     self.session.add_event("Logoff sent the client")
                     self.logoff()
 
-                # Handle enter event
                 elif ui_event_source.event_type == 7 and ui_event_source.control_type == 10 and ui_event_source.event_data == 0:
-                    self.logger.debug("Enter sent by the client %s" % str(self.client_address))
+                    self.logger.debug(f"Enter sent by the client {str(self.client_address)}")
                     self.session.add_event("Enter sent the client")
 
-            # Handle menu option
             elif ui_event_source.valid_menu_pos:
-                self.logger.debug("Menu event sent by the client %s" % str(self.client_address))
+                self.logger.debug(f"Menu event sent by the client {str(self.client_address)}")
                 self.session.add_event("Menu event sent the client")
 
             else:
-                self.logger.debug("Other event sent by the client %s" % str(self.client_address))
+                self.logger.debug(f"Other event sent by the client {str(self.client_address)}")
                 self.session.add_event("Other event sent the client")
 
         # Handle login request (DYNT Atom == \x00)
@@ -436,22 +436,68 @@ class SAPDispatcherServerHandler(Loggeable, SAPNIServerHandler):
         ]
 
     def make_error_screen(self, message):
-        return [SAPDiagItem(item_value=support_data_sapnw_702, item_type=16, item_id=6, item_sid=17),
-                SAPDiagItem(item_value=self.context_id, item_type=16, item_id=6, item_sid=33),
-                SAPDiagItem(item_value='\x01\x80\x8d\x17\xe1\xe8\xdb\xf1\xd2\xb4<\x00\x0c)}.\x11\x01', item_type=16, item_id=6, item_sid=31),
-                SAPDiagItem(item_value=self.sid, item_type=16, item_id=6, item_sid=2),
-                SAPDiagItem(item_value=self.client_no, item_type=16, item_id=6, item_sid=12),
-                SAPDiagItem(item_value=self.hostname, item_type=16, item_id=6, item_sid=33),
-                SAPDiagItem(item_value='TRADESHOW\x00', item_type=16, item_id=6, item_sid=37),
-                SAPDiagItem(item_value=self.make_kernel_version(), item_type=16, item_id=6, item_sid=41),
-                SAPDiagItem(item_value='SAP R/3 (1) %s     ' % self.sid, item_type=16, item_id=12, item_sid=10),
-                SAPDiagItem(item_value='SAPMSYST                                ', item_type=16, item_id=6, item_sid=15),
-                SAPDiagItem(item_value='0020                ', item_type=16, item_id=6, item_sid=16),
-                SAPDiagItem(item_value='SAPMSYST                                ', item_type=16, item_id=6, item_sid=13),
-                SAPDiagItem(item_value='0020', item_type=16, item_id=6, item_sid=14),
-                SAPDiagItem(item_value=self.session_title, item_type=16, item_id=12, item_sid=9),
-                SAPDiagItem(item_value=message, item_type=16, item_id=6, item_sid=11),
-                ]
+        return [
+            SAPDiagItem(
+                item_value=support_data_sapnw_702,
+                item_type=16,
+                item_id=6,
+                item_sid=17,
+            ),
+            SAPDiagItem(
+                item_value=self.context_id, item_type=16, item_id=6, item_sid=33
+            ),
+            SAPDiagItem(
+                item_value='\x01\x80\x8d\x17\xe1\xe8\xdb\xf1\xd2\xb4<\x00\x0c)}.\x11\x01',
+                item_type=16,
+                item_id=6,
+                item_sid=31,
+            ),
+            SAPDiagItem(item_value=self.sid, item_type=16, item_id=6, item_sid=2),
+            SAPDiagItem(
+                item_value=self.client_no, item_type=16, item_id=6, item_sid=12
+            ),
+            SAPDiagItem(
+                item_value=self.hostname, item_type=16, item_id=6, item_sid=33
+            ),
+            SAPDiagItem(
+                item_value='TRADESHOW\x00', item_type=16, item_id=6, item_sid=37
+            ),
+            SAPDiagItem(
+                item_value=self.make_kernel_version(),
+                item_type=16,
+                item_id=6,
+                item_sid=41,
+            ),
+            SAPDiagItem(
+                item_value=f'SAP R/3 (1) {self.sid}     ',
+                item_type=16,
+                item_id=12,
+                item_sid=10,
+            ),
+            SAPDiagItem(
+                item_value='SAPMSYST                                ',
+                item_type=16,
+                item_id=6,
+                item_sid=15,
+            ),
+            SAPDiagItem(
+                item_value='0020                ',
+                item_type=16,
+                item_id=6,
+                item_sid=16,
+            ),
+            SAPDiagItem(
+                item_value='SAPMSYST                                ',
+                item_type=16,
+                item_id=6,
+                item_sid=13,
+            ),
+            SAPDiagItem(item_value='0020', item_type=16, item_id=6, item_sid=14),
+            SAPDiagItem(
+                item_value=self.session_title, item_type=16, item_id=12, item_sid=9
+            ),
+            SAPDiagItem(item_value=message, item_type=16, item_id=6, item_sid=11),
+        ]
 
     def make_passport(self):
         return "*TH*\x03\x00\xe6\x00\x00%(sid)s/%(hostname)s_%(sid)s_00" \
@@ -471,7 +517,7 @@ class SAPDispatcherServerHandler(Loggeable, SAPNIServerHandler):
                                        self.kernel_patch_level)
 
     def logoff(self):
-        self.logger.debug("Logging off the client %s" % str(self.client_address))
+        self.logger.debug(f"Logging off the client {str(self.client_address)}")
         try:
             response = SAPDiag(com_flag_TERM_EOP=1, com_flag_TERM_EOC=1, compress=0)
             self.request.send(response)

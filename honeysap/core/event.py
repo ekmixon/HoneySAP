@@ -46,14 +46,18 @@ class Event(object):
     def __repr__(self):
         if self.session is None:
             raise Exception("Event not attached to a session")
-        return json.dumps({"session": str(self.session.uuid),
-                           "event": self.event,
-                           "data": self.data if self.data else "",
-                           "request": b64encode(self.request) if self.request else "",
-                           "response": b64encode(self.response) if self.response else "",
-                           "service": self.session.service,
-                           "source_ip": self.session.source_ip,
-                           "source_port": self.session.source_port,
-                           "target_ip": self.session.target_ip,
-                           "target_port": self.session.target_port,
-                           "timestamp": str(self.timestamp)})
+        return json.dumps(
+            {
+                "session": str(self.session.uuid),
+                "event": self.event,
+                "data": self.data or "",
+                "request": b64encode(self.request) if self.request else "",
+                "response": b64encode(self.response) if self.response else "",
+                "service": self.session.service,
+                "source_ip": self.session.source_ip,
+                "source_port": self.session.source_port,
+                "target_ip": self.session.target_ip,
+                "target_port": self.session.target_port,
+                "timestamp": str(self.timestamp),
+            }
+        )

@@ -65,7 +65,7 @@ class Loggeable(object):
             else:
                 logger_instance_name = self.__class__.__name__
 
-            self._logger_name = "honeysap.%s" % logger_instance_name
+            self._logger_name = f"honeysap.{logger_instance_name}"
 
             self._logger = getLogger(self._logger_name)
             self._logger.debug("Logger attached to %s", self._logger_name)

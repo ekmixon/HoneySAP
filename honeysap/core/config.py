@@ -182,22 +182,27 @@ class Configuration(Values):
             fnc = self._update_loose
 
         if from_file is True:
-            if isinstance(obj, (string_types, unicode, )) and isfile(obj):
-                valid_parser = None
-                for parser in self._options_parsers:
-                    if parser.check_file(obj):
-                        valid_parser = parser
-                        break
-                if valid_parser:
-                    self.update(parser.parse_file(obj), mode)
-                    self._config_files.extend(parser._config_files)
-                else:
-                    raise ConfigurationParserNotFound("None of the available configuration "
-                                                      "parsers is able to parse the "
-                                                      "configuration file")
-            else:
+            if not isinstance(
+                obj,
+                (
+                    string_types,
+                    unicode,
+                ),
+            ) or not isfile(obj):
                 raise ValueError("Invalid configuration file")
 
+            valid_parser = None
+            for parser in self._options_parsers:
+                if parser.check_file(obj):
+                    valid_parser = parser
+                    break
+            if valid_parser:
+                self.update(parser.parse_file(obj), mode)
+                self._config_files.extend(parser._config_files)
+            else:
+                raise ConfigurationParserNotFound("None of the available configuration "
+                                                  "parsers is able to parse the "
+                                                  "configuration file")
             # Add the filename to the list of config files
             self._config_files.append(obj)
 
@@ -223,16 +228,15 @@ class Configuration(Values):
         return config
 
     def get(self, option, default=None):
-        if option in self.__dict__:
-            value = self.__dict__[option]
-            try:
-                if "_config_files" in value:
-                    del(value["_config_files"])
-            except TypeError:
-                pass
-            return value
-        else:
+        if option not in self.__dict__:
             return default
+        value = self.__dict__[option]
+        try:
+            if "_config_files" in value:
+                del(value["_config_files"])
+        except TypeError:
+            pass
+        return value
 
     def get_config_files(self):
         return self._config_files
